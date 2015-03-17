@@ -15,5 +15,10 @@ setup(
 
     packages=find_packages(),
     install_requires=['irc==12.1.1',
-                      'veliberator==0.3.3']
+                      'veliberator==0.3.3'],
+    entry_points={
+        'console_scripts': [
+            'velib-irc-bot=velib_irc_bot.bot.cmdline',
+        ]
+    }
 )
