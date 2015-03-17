@@ -18,7 +18,7 @@ setup(
                       'veliberator==0.3.3'],
     entry_points={
         'console_scripts': [
-            'velib-irc-bot=velib_irc_bot.bot.cmdline',
+            'velib-irc-bot=velib_irc_bot.bot:cmdline',
         ]
     }
 )
