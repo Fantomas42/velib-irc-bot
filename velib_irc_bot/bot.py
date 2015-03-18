@@ -16,12 +16,15 @@ from veliberator.station import Station
 from veliberator.station import UnknowStation
 
 STATUS_RE = re.compile('^status (\d+)$')
-ADDRESS_RE = re.compile('^address ([\w\s-]+)$')
+ADDRESS_RE = re.compile('^address ([\,\w\s-]+)$')
 
 
 class VelibIRCBot(SingleServerIRCBot):
 
     def __init__(self):
+        self.min_places = 3
+        self.max_display = 3
+
         db_connection(DATABASE_URI)
         SingleServerIRCBot.__init__(
             self, [("irc.freenode.net", 6667)],
@@ -71,26 +74,37 @@ class VelibIRCBot(SingleServerIRCBot):
         c.notice(nick, 'Synchronization completed !')
 
     def status(self, c, nick, station_id):
-        min_places = 2
-        max_display = 3
-
         try:
             station = Station(station_id)
         except UnknowStation:
             c.privmsg(nick, station_id + ' station inconnue !')
             return
         self.show_station(c, nick, station)
-        if not station.is_free(min_places):
+        if not station.is_free(self.min_places):
             c.privmsg(nick, 'Trop peu de places, recherche aux alentours...')
             displayed = 0
             for station_information_around in station.stations_around:
                 station_around = Station(station_information_around.id)
-                if displayed == max_display:
+                if displayed == self.max_display:
                     break
-                if station_around.is_free(min_places):
+                if station_around.is_free(self.min_places):
                     self.show_station(c, nick, station_around,
                                       station_information_around)
                     displayed += 1
+
+    def address(self, c, nick, address):
+        finder = AddressGeoFinder(address)
+        stations = finder.get_stations_around(STATION_AROUND_RADIUS)
+
+        displayed = 0
+        for station_information_around in stations:
+            station_around = Station(station_information_around.id)
+            if displayed == self.max_display:
+                break
+            if station_around.is_free(self.min_places):
+                self.show_station(c, nick, station_around,
+                                  station_information_around)
+                displayed += 1
 
     def show_station(self, c, nick, station, infos=None):
         if not infos:
@@ -108,22 +122,6 @@ class VelibIRCBot(SingleServerIRCBot):
                        station.status.free,
                        infos.distance,
                        infos.full_address))
-
-    def address(self, c, nick, address):
-        min_places = 2
-        max_display = 3
-        finder = AddressGeoFinder(address)
-        stations = finder.get_stations_around(STATION_AROUND_RADIUS)
-
-        displayed = 0
-        for station_information_around in stations:
-            station_around = Station(station_information_around.id)
-            if displayed == max_display:
-                break
-            if station_around.is_free(min_places):
-                self.show_station(c, nick, station_around,
-                                  station_information_around)
-                displayed += 1
 
 
 def cmdline():
