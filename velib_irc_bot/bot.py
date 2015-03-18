@@ -11,6 +11,7 @@ from veliberator.models import db_connection
 from veliberator.settings import DATABASE_URI
 from veliberator.settings import STATION_AROUND_RADIUS
 from veliberator.cartography import Cartography
+from veliberator.geofinder import GeoFinderError
 from veliberator.geofinder import AddressGeoFinder
 from veliberator.station import Station
 from veliberator.station import UnknowStation
@@ -98,8 +99,17 @@ class VelibIRCBot(SingleServerIRCBot):
                     displayed += 1
 
     def address(self, c, nick, address):
-        finder = AddressGeoFinder(address)
+        try:
+            finder = AddressGeoFinder(address)
+        except GeoFinderError:
+            c.privmsg(nick, 'Et pourquoi pas ouvrir '
+                      'un garage a velo dans ton cul ?')
+            return
+
         stations = finder.get_stations_around(STATION_AROUND_RADIUS)
+        if not stations:
+            c.privmsg(nick, "%s... C'est la brousse la-bas... "
+                      "Je ne travaille pas dans ces conditions !" % address)
 
         displayed = 0
         for station_information_around in stations:
