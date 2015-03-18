@@ -5,6 +5,7 @@ import re
 
 from irc.strings import lower
 from irc.bot import SingleServerIRCBot
+from irc.buffer import DecodingLineBuffer
 
 from veliberator import __version__
 from veliberator.models import db_connection
@@ -18,6 +19,20 @@ from veliberator.station import UnknowStation
 
 STATUS_RE = re.compile('^status (\d+)$')
 ADDRESS_RE = re.compile('^address ([\,\w\s-]+)$')
+
+
+class CompliantDecodingLineBuffer(DecodingLineBuffer):
+
+    def lines(self):
+        lines = [l for l in super(DecodingLineBuffer, self).lines()]
+        try:
+            # Note: skipping parent in super to go up one class in the branch
+            # (to avoid trying to decode with 'replace')
+            return iter([line.decode('utf-8') for line in lines])
+        except UnicodeDecodeError:
+            return iter([line.decode('latin-1') for line in lines])
+        # fallback
+        return iter([line.decode('utf-8', 'replace') for line in lines])
 
 
 class VelibIRCBot(SingleServerIRCBot):
@@ -38,6 +53,7 @@ class VelibIRCBot(SingleServerIRCBot):
         server.nick(server.get_nickname() + '_')
 
     def on_welcome(self, server, event):
+        self.connection.buffer = CompliantDecodingLineBuffer()
         server.join(self.channel)
 
     def on_privmsg(self, server, event):
