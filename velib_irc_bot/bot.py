@@ -90,7 +90,7 @@ class VelibIRCBot(SingleServerIRCBot):
             address = ADDRESS_RE.match(cmd).group(1)
             self.address(c, nick, address, user)
         else:
-            c.privmsg(nick, "%sGne ? %s ?" % (user, cmd))
+            c.privmsg(nick, "%sNi ! %s ?" % (user, cmd))
 
     def synchronize(self, c, nick, user):
         c.privmsg(nick, '%sSynchronisation des stations...' % user)
