@@ -40,17 +40,17 @@ class VelibIRCBot(SingleServerIRCBot):
         server.join(self.channel)
 
     def on_privmsg(self, server, event):
-        self.do_command(event, event.arguments[0])
+        nick = event.source.nick
+        self.do_command(event, event.arguments[0], nick)
 
     def on_pubmsg(self, server, event):
         a = event.arguments[0].split(', ', 1)
         if len(a) > 1 and (lower(a[0]) ==
                            lower(self.connection.get_nickname())):
-            self.do_command(event, a[1].strip())
+            self.do_command(event, a[1].strip(), self.channel)
         return
 
-    def do_command(self, event, cmd):
-        nick = event.source.nick
+    def do_command(self, event, cmd, nick):
         c = self.connection
 
         if cmd == 'disconnect':
@@ -71,7 +71,7 @@ class VelibIRCBot(SingleServerIRCBot):
             address = ADDRESS_RE.match(cmd).group(1)
             self.address(c, nick, address)
         else:
-            c.privmsg(nick, "Gne ? " + cmd)
+            c.privmsg(nick, "Gne ? %s ?" % cmd)
 
     def synchronize(self, c, nick):
         c.privmsg(nick, 'Synchronisation des stations...')
