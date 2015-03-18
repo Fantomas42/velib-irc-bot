@@ -21,21 +21,23 @@ ADDRESS_RE = re.compile('^address ([\,\w\s-]+)$')
 
 class VelibIRCBot(SingleServerIRCBot):
 
-    def __init__(self):
+    def __init__(self, nickname='veliberator', channel='#velib'):
         self.min_places = 3
         self.max_display = 3
+        self.channel = channel
+        self.nickname = nickname
 
         db_connection(DATABASE_URI)
         SingleServerIRCBot.__init__(
             self, [("irc.freenode.net", 6667)],
-            "veliberator",
+            self.nickname,
             "Assistant pour les stations velib")
 
     def on_nicknameinuse(self, server, event):
         server.nick(server.get_nickname() + '_')
 
     def on_welcome(self, server, event):
-        server.join("#velib")
+        server.join(self.channel)
 
     def on_privmsg(self, server, event):
         self.do_command(event, event.arguments[0])
@@ -51,12 +53,15 @@ class VelibIRCBot(SingleServerIRCBot):
         nick = event.source.nick
         c = self.connection
 
-        if cmd == 'disco':
+        if cmd == 'disconnect':
             self.disconnect('I will be bike !')
         elif cmd == 'die':
             self.die('Road rage !')
+        elif cmd == 'help':
+            c.privmsg(nick, 'Commandes disponibles: '
+                      'synchronize|status ID|address LOCATION|version')
         elif cmd == 'version':
-            c.notice(nick, 'Veliberator v' + __version__)
+            c.privmsg(nick, 'Je tourne sous la version %s' % __version__)
         elif cmd == 'synchronize':
             self.synchronize(c, nick)
         elif STATUS_RE.match(cmd):
@@ -66,12 +71,12 @@ class VelibIRCBot(SingleServerIRCBot):
             address = ADDRESS_RE.match(cmd).group(1)
             self.address(c, nick, address)
         else:
-            c.privmsg(nick, "Gneh: " + cmd)
+            c.privmsg(nick, "Gne ? " + cmd)
 
     def synchronize(self, c, nick):
-        c.notice(nick, 'Synchronizing...')
+        c.privmsg(nick, 'Synchronisation des stations...')
         Cartography.synchronize()
-        c.notice(nick, 'Synchronization completed !')
+        c.privmsg(nick, 'Synchronisation complete !')
 
     def status(self, c, nick, station_id):
         try:
