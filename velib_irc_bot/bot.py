@@ -9,7 +9,9 @@ from irc.bot import SingleServerIRCBot
 from veliberator import __version__
 from veliberator.models import db_connection
 from veliberator.settings import DATABASE_URI
+from veliberator.settings import STATION_AROUND_RADIUS
 from veliberator.cartography import Cartography
+from veliberator.geofinder import AddressGeoFinder
 from veliberator.station import Station
 from veliberator.station import UnknowStation
 
@@ -108,7 +110,20 @@ class VelibIRCBot(SingleServerIRCBot):
                        infos.full_address))
 
     def address(self, c, nick, address):
-        c.privmsg(nick, address)
+        min_places = 2
+        max_display = 3
+        finder = AddressGeoFinder(address)
+        stations = finder.get_stations_around(STATION_AROUND_RADIUS)
+
+        displayed = 0
+        for station_information_around in stations:
+            station_around = Station(station_information_around.id)
+            if displayed == max_display:
+                break
+            if station_around.is_free(min_places):
+                self.show_station(c, nick, station_around,
+                                  station_information_around)
+                displayed += 1
 
 
 def cmdline():
