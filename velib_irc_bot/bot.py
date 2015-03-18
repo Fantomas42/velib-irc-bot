@@ -2,6 +2,7 @@
 Bot for Velib on IRC
 """
 import re
+from random import choice
 
 from irc.strings import lower
 from irc.bot import SingleServerIRCBot
@@ -91,6 +92,8 @@ class VelibIRCBot(SingleServerIRCBot):
         elif ADDRESS_RE.match(cmd):
             address = ADDRESS_RE.match(cmd).group(1)
             self.address(c, nick, address, user)
+        elif cmd[-1] == '?':
+            self.fortune(c, nick, user)
         else:
             c.privmsg(nick, "%sNi ! %s ?" % (user, cmd))
 
@@ -164,6 +167,11 @@ class VelibIRCBot(SingleServerIRCBot):
                  station.status.free,
                  infos.distance,
                  infos.full_address))
+
+    def fortune(self, c, nick, user):
+        fortune = choice(['Oui', 'Non', 'Certain', 'Absolument sur',
+                          'Jamais', 'Tu reves', 'Peut-etre'])
+        c.privmsg(nick, '%s%s !' % (user, fortune))
 
 
 def cmdline():
