@@ -76,6 +76,7 @@ class VelibIRCBot(SingleServerIRCBot):
 
         if cmd == 'die':
             if 'fantomas' in user:
+                c.privmsg(nick, 'I will be bike !')
                 self.die('I will be bike !')
             c.privmsg(nick, "%sdie toi meme, bourreau d'enfant !" % user)
         elif cmd == 'help':
