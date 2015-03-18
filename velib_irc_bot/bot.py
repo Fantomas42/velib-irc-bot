@@ -48,43 +48,47 @@ class VelibIRCBot(SingleServerIRCBot):
         a = event.arguments[0].split(', ', 1)
         if len(a) > 1 and (lower(a[0]) ==
                            lower(self.connection.get_nickname())):
-            self.do_command(event, a[1].strip(), self.channel)
+            self.do_command(event, a[1].strip(), self.channel,
+                            event.source.nick)
         return
 
-    def do_command(self, event, cmd, nick):
+    def do_command(self, event, cmd, nick, user=''):
         c = self.connection
+        if user:
+            user = '%s ' % user
 
-        if cmd == 'disconnect':
-            self.disconnect('I will be bike !')
-        elif cmd == 'die':
-            self.die('Road rage !')
+        if cmd == 'die':
+            self.die('I will be bike !')
         elif cmd == 'help':
-            c.privmsg(nick, 'Commandes disponibles: '
-                      'synchronize|status ID|address LOCATION|version')
+            c.privmsg(nick, '%sCommandes disponibles: '
+                      'synchronize|status ID|address LOCATION|version' % user)
         elif cmd == 'version':
-            c.privmsg(nick, 'Je tourne sous la version %s' % __version__)
+            c.privmsg(nick, '%sJe tourne sous la version %s' % (
+                user, __version__))
         elif cmd == 'synchronize':
-            self.synchronize(c, nick)
+            self.synchronize(c, nick, user)
         elif STATUS_RE.match(cmd):
             station_id = STATUS_RE.match(cmd).group(1)
-            self.status(c, nick, station_id)
+            self.status(c, nick, station_id, user)
         elif ADDRESS_RE.match(cmd):
             address = ADDRESS_RE.match(cmd).group(1)
-            self.address(c, nick, address)
+            self.address(c, nick, address, user)
         else:
-            c.privmsg(nick, "Gne ? %s ?" % cmd)
+            c.privmsg(nick, "%sGne ? %s ?" % (user, cmd))
 
-    def synchronize(self, c, nick):
-        c.privmsg(nick, 'Synchronisation des stations...')
+    def synchronize(self, c, nick, user):
+        c.privmsg(nick, '%sSynchronisation des stations...' % user)
         Cartography.synchronize()
-        c.privmsg(nick, 'Synchronisation complete !')
+        c.privmsg(nick, '%sSynchronisation complete !' % user)
 
-    def status(self, c, nick, station_id):
+    def status(self, c, nick, station_id, user):
         try:
             station = Station(station_id)
         except UnknowStation:
-            c.privmsg(nick, station_id + ' station inconnue !')
+            c.privmsg(nick, '%s%s station inconnue !' % (user, station_id))
             return
+        if user:
+            c.privmsg(nick, '%s:' % user)
         self.show_station(c, nick, station)
         if not station.is_free(self.min_places):
             c.privmsg(nick, 'Trop peu de places, recherche aux alentours...')
@@ -98,20 +102,23 @@ class VelibIRCBot(SingleServerIRCBot):
                                       station_information_around)
                     displayed += 1
 
-    def address(self, c, nick, address):
+    def address(self, c, nick, address, user):
         try:
             finder = AddressGeoFinder(address)
         except GeoFinderError:
-            c.privmsg(nick, 'Et pourquoi pas ouvrir '
-                      'un garage a velo dans ton cul ?')
+            c.privmsg(nick, '%sEt pourquoi pas ouvrir '
+                      'un garage a velo dans ton cul ?' % user)
             return
 
         stations = finder.get_stations_around(STATION_AROUND_RADIUS)
         if not stations:
-            c.privmsg(nick, "%s... C'est la brousse la-bas... "
-                      "Je ne travaille pas dans ces conditions !" % address)
+            c.privmsg(nick, "%s%s... C'est la brousse la-bas... "
+                      "Je ne travaille pas dans ces conditions !" % (
+                          user, address))
 
         displayed = 0
+        if user:
+            c.privmsg(nick, '%s:' % user)
         for station_information_around in stations:
             station_around = Station(station_information_around.id)
             if displayed == self.max_display:
@@ -129,14 +136,15 @@ class VelibIRCBot(SingleServerIRCBot):
                        station.status.total,
                        station.status.free))
         else:
-            c.privmsg(nick,
-                      'Station %s: %s/%s velos, %s places libres. %.2fm. %s' %
-                      (station.id,
-                       station.status.available,
-                       station.status.total,
-                       station.status.free,
-                       infos.distance,
-                       infos.full_address))
+            c.privmsg(
+                nick,
+                'Station %s: %s/%s velos, %s places libres. %.2fm. %s' %
+                (station.id,
+                 station.status.available,
+                 station.status.total,
+                 station.status.free,
+                 infos.distance,
+                 infos.full_address))
 
 
 def cmdline():
