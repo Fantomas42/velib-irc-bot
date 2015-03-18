@@ -170,8 +170,9 @@ class VelibIRCBot(SingleServerIRCBot):
 
     def fortune(self, c, nick, user):
         fortune = choice(['Oui', 'Non', 'Certain', 'Absolument',
-                          'Jamais', 'Tu reves', 'Peut-etre'])
-        c.privmsg(nick, '%s%s !' % (user, fortune))
+                          'Jamais', 'Tu reves', 'Peut-etre', '42'])
+        fortune += choice(['', '', '', ' ?', ' !'])
+        c.privmsg(nick, '%s%s' % (user, fortune))
 
 
 def cmdline():
