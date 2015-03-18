@@ -131,6 +131,7 @@ class VelibIRCBot(SingleServerIRCBot):
             c.privmsg(nick, "%s%s... C'est la brousse la-bas... "
                       "Je ne travaille pas dans ces conditions !" % (
                           user, address))
+            return
 
         displayed = 0
         if user:
