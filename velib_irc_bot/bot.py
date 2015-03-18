@@ -56,6 +56,7 @@ class VelibIRCBot(SingleServerIRCBot):
     def on_welcome(self, server, event):
         self.connection.buffer = CompliantDecodingLineBuffer()
         server.join(self.channel)
+        server.privmsg(self.channel, "Bonjour tout le monde, I'm bike !")
 
     def on_privmsg(self, server, event):
         nick = event.source.nick
