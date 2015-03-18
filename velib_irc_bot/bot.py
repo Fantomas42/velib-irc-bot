@@ -169,7 +169,7 @@ class VelibIRCBot(SingleServerIRCBot):
                  infos.full_address))
 
     def fortune(self, c, nick, user):
-        fortune = choice(['Oui', 'Non', 'Certain', 'Absolument sur',
+        fortune = choice(['Oui', 'Non', 'Certain', 'Absolument',
                           'Jamais', 'Tu reves', 'Peut-etre'])
         c.privmsg(nick, '%s%s !' % (user, fortune))
 
