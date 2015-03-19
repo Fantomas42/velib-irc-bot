@@ -57,16 +57,17 @@ class VelibIRCBot(SingleServerIRCBot):
         self.connection.buffer = CompliantDecodingLineBuffer()
         server.join(self.channel)
         server.privmsg(self.channel, "Welcome bike !")
+        self.pubmsgre = re.compile('^%s[:\,]?[\s]+([\w\W]+)$' %
+                                   self.connection.get_nickname())
 
     def on_privmsg(self, server, event):
         nick = event.source.nick
         self.do_command(event, event.arguments[0], nick)
 
     def on_pubmsg(self, server, event):
-        a = event.arguments[0].split(', ', 1)
-        if len(a) > 1 and (lower(a[0]) ==
-                           lower(self.connection.get_nickname())):
-            self.do_command(event, a[1].strip(), self.channel,
+        command = self.pubmsgre.match(event.arguments[0])
+        if command:
+            self.do_command(event, command.group(1), self.channel,
                             event.source.nick)
         return
 
@@ -108,13 +109,15 @@ class VelibIRCBot(SingleServerIRCBot):
         try:
             station = Station(station_id)
         except UnknowStation:
-            c.privmsg(nick, '%s%s station inconnue !' % (user, station_id))
+            c.privmsg(nick, "%sLa station %s n'existe que dans tes reves !" % (
+                user, station_id))
             return
         if user:
-            c.privmsg(nick, '%s:' % user)
+            c.privmsg(nick, '%s:' % user.strip())
         self.show_station(c, nick, station)
         if not station.is_free(self.min_places):
-            c.privmsg(nick, 'Trop peu de places, recherche aux alentours...')
+            c.privmsg(nick, 'Trop peu de places pour se garer, '
+                      'je recherche aux alentours...')
             displayed = 0
             for station_information_around in station.stations_around:
                 station_around = Station(station_information_around.id)
@@ -142,7 +145,7 @@ class VelibIRCBot(SingleServerIRCBot):
 
         displayed = 0
         if user:
-            c.privmsg(nick, '%s:' % user)
+            c.privmsg(nick, '%s:' % user.strip())
         for station_information_around in stations:
             station_around = Station(station_information_around.id)
             if displayed == self.max_display:
